@@ -61,6 +61,10 @@
           <input class="u-full-width" type="text" value="#000000" id="line-color-input">
           <label for="line-size-input">Set Line Size</label>
           <input class="u-full-width" type="number" value="5" id="line-size-input">
+          <label for="usecurves">
+            <input class="" type="checkbox" id="usecurves">
+            <span class="label-body">Use Curves</span>
+          </label>
           <div class="row">
             <div class="one-half column">
               <button class="u-full-width" id="undo">Undo</button>
@@ -147,6 +151,16 @@ pad.setReadOnly(true);
         pad.setLineSize(size);
     }
     document.getElementById('line-size-input').oninput = setLineSize;
+
+    // use curves
+    function useCurves(ev) {
+        if (ev.target.checked) {
+            pad.setCurvesMode()
+        } else {
+            pad.setLinesMode()
+        }
+    }
+    document.getElementById('usecurves').onchange = useCurves;
 
     // undo
     function undo() {

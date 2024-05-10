@@ -7,6 +7,7 @@ export default class Sketchpad {
     private backgroundColor?;
     private readOnly;
     private aspectRatio;
+    private curvesMode;
     private lineWidth;
     private lineColor;
     private lineCap;
@@ -25,6 +26,8 @@ export default class Sketchpad {
     setLineWidth(width: number): void;
     setLineSize(size: number): void;
     setLineColor(color: string): void;
+    setCurvesMode(): void;
+    setLinesMode(): void;
     setReadOnly(readOnly: boolean): void;
     undo(): void;
     redo(): void;
@@ -36,6 +39,7 @@ export default class Sketchpad {
     private setOptions;
     private getCursorRelativeToCanvas;
     private normalizePoint;
+    private midPoint;
     private getLineWidthRelativeToCanvas;
     private normalizeLineWidth;
     private clearCanvas;
@@ -74,6 +78,7 @@ interface SketchpadOptionsI {
     height?: number;
     aspectRatio?: number;
     line?: LineOptionsI;
+    curvesMode?: boolean;
     data?: DataI;
     onDrawEnd?: () => void;
 }

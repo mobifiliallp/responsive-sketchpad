@@ -10,6 +10,7 @@ export default class Sketchpad {
   private backgroundColor?: string;
   private readOnly = false;
   private aspectRatio = 1; // v2.0 - Remove; rely on canvas as source-of-truth
+  private curvesMode = false;
   private lineWidth = 5;
   private lineColor = '#000';
   private lineCap: CanvasLineCap = 'round';
@@ -59,6 +60,7 @@ export default class Sketchpad {
       width: this.canvas.width,
       height: this.canvas.height,
       aspectRatio: this.canvas.width / this.canvas.height,
+      curvesMode: this.curvesMode,
       line: {
         size: this.lineWidth,
         color: this.lineColor,
@@ -119,6 +121,18 @@ export default class Sketchpad {
   // Set the line color
   setLineColor(color: string): void {
     this.lineColor = color;
+  }
+
+  // Set curve mode - use quadratic curves
+  setCurvesMode(): void {
+    this.curvesMode = true;
+    this.redraw();
+  }
+
+  // set lines mode - use straight lines
+  setLinesMode(): void {
+    this.curvesMode = false;
+    this.redraw();
   }
 
   // Set whether or not new strokes can be drawn on the canvas
@@ -232,6 +246,10 @@ export default class Sketchpad {
     return new Point(p.x * this.canvas.width, p.y * this.canvas.height);
   }
 
+  private midPoint(p1: Point, p2: Point): Point {
+    return new Point((p1.x + p2.x) / 2, (p1.y + p2.y) / 2);
+  }
+
   private getLineWidthRelativeToCanvas(size: number): number {
     return size / this.canvas.width;
   }
@@ -256,14 +274,32 @@ export default class Sketchpad {
 
     this.ctx.beginPath();
 
-    for (let i = 0; i < stroke.points.length - 1; i++) {
-      const start = this.normalizePoint(stroke.points[i]);
-      const end = this.normalizePoint(stroke.points[i + 1]);
-
-      this.ctx.moveTo(start.x, start.y);
-      this.ctx.lineTo(end.x, end.y);
+    if (this.curvesMode) {
+      let originPt = this.normalizePoint(stroke.points[0]);
+      let controlPt = originPt;
+      let destinationPt = originPt;
+      if (stroke.points.length > 1) {
+        destinationPt = this.normalizePoint(this.midPoint(stroke.points[0], stroke.points[1]));
+      }
+      this.ctx.moveTo(originPt.x, originPt.y);
+      this.ctx.quadraticCurveTo(controlPt.x, controlPt.y, destinationPt.x, destinationPt.y);
+      for (let i = 1; i < stroke.points.length - 1; i++) {
+        originPt = destinationPt;
+        controlPt = this.normalizePoint(stroke.points[i]);
+        destinationPt = this.normalizePoint(this.midPoint(stroke.points[i], stroke.points[i + 1]));
+  
+        this.ctx.quadraticCurveTo(controlPt.x, controlPt.y, destinationPt.x, destinationPt.y);
+      }
+    } else {
+      for (let i = 0; i < stroke.points.length - 1; i++) {
+        const start = this.normalizePoint(stroke.points[i]);
+        const end = this.normalizePoint(stroke.points[i + 1]);
+  
+        this.ctx.moveTo(start.x, start.y);
+        this.ctx.lineTo(end.x, end.y);
+      }
+      this.ctx.closePath();  
     }
-    this.ctx.closePath();
 
     if (stroke.color) {
       this.ctx.strokeStyle = stroke.color;
@@ -374,7 +410,7 @@ class Point implements PointI {
   constructor(
     public x: number,
     public y: number,
-  ) {}
+  ) { }
 }
 
 interface RectI {
@@ -402,6 +438,8 @@ interface SketchpadOptionsI {
   height?: number;
   aspectRatio?: number;
   line?: LineOptionsI;
+  // Use curves instead of lines
+  curvesMode?: boolean;
   data?: DataI;
   onDrawEnd?: () => void;
 }
